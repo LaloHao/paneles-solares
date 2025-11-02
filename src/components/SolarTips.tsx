@@ -84,11 +84,11 @@ export default function SolarTips({ systemPower, monthlySavings }: SolarTipsProp
         <h3>💸 Beneficios Financieros</h3>
         <div className="financial-stats">
           <div className="stat">
-            <span className="stat-value">${(monthlySavings * 12).toFixed(0)}</span>
+            <span className="stat-value">$MXN {(monthlySavings * 12).toFixed(0)}</span>
             <span className="stat-label">Ahorro anual</span>
           </div>
           <div className="stat">
-            <span className="stat-value">${(monthlySavings * 12 * 25).toFixed(0)}</span>
+            <span className="stat-value">$MXN {(monthlySavings * 12 * 25).toFixed(0)}</span>
             <span className="stat-label">Ahorro en 25 años</span>
           </div>
         </div>

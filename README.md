@@ -1,73 +1,78 @@
-# React + TypeScript + Vite
+# 🌞 Calculador de Paneles Solares
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Una aplicación web moderna y precisa para calcular cuántos paneles solares necesitas para tu hogar en México, considerando las particularidades de los recibos de CFE.
 
-Currently, two official plugins are available:
+## 🚀 [**Acceder a la Aplicación**](https://hao.systems/paneles-solares/)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+[![Calculador de Paneles Solares](./capture.png)](https://hao.systems/paneles-solares/)
 
-## React Compiler
+## ✨ Características
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 📊 **Cálculo Preciso**
+- **Soporte para recibos bimestrales**: Configuración específica para recibos de CFE de 1, 2, 3 o 6 meses
+- **Cálculo en decimales**: Muestra el número exacto de paneles necesarios antes del redondeo
+- **Potencia en Watts**: Resultados en Watts para mayor claridad
+- **Factores reales**: Considera eficiencia del sistema, pérdidas y condiciones reales de México
 
-## Expanding the ESLint configuration
+### 🏠 **Adaptado para México**
+- **Recibos CFE**: Diseñado específicamente para los recibos de la Comisión Federal de Electricidad
+- **Horas de sol**: Configurado con promedios de radiación solar de México (5.5 horas)
+- **Paneles de 400W**: Potencia estándar más común en el mercado mexicano
+- **Validaciones inteligentes**: Detecta consumos atípicos y ofrece recomendaciones
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 📱 **Interfaz Moderna**
+- **Responsive**: Funciona perfectamente en móviles, tablets y escritorio
+- **Fácil de usar**: Interfaz intuitiva con guías paso a paso
+- **Resultados claros**: Tarjetas visuales con métricas clave
+- **Consejos integrados**: Recomendaciones automáticas según el tamaño del sistema
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🎯 **Cómo Usar**
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+1. **Localiza tu recibo CFE** y busca el consumo total en kWh
+2. **Ingresa el consumo total** exactamente como aparece en el recibo
+3. **Selecciona el período** (la mayoría son bimestrales - 2 meses)
+4. **Especifica el área de tu techo** disponible para paneles
+5. **Ajusta las horas de sol** según tu ubicación (opcional)
+6. **¡Obtén tu resultado!** - Número exacto y recomendación de paneles
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 📈 **Ejemplo de Uso**
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+**Recibo bimestral con 650 kWh:**
+- Consumo total: `650 kWh`
+- Período: `2 meses`
+- Consumo mensual calculado: `325 kWh/mes`
+- Resultado: `≈ 7-8 paneles de 400W`
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🛠 **Tecnologías**
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- **React 19** con TypeScript
+- **Vite** para desarrollo rápido
+- **CSS moderno** con gradientes y animaciones
+- **Responsive design** para todos los dispositivos
+- **GitHub Pages** para hosting
+
+## 🌱 **Beneficios Calculados**
+
+La aplicación calcula automáticamente:
+- ✅ **Número exacto de paneles** (con decimales)
+- ⚡ **Potencia total del sistema** (en Watts)
+- 📊 **Generación mensual esperada** (kWh/mes)
+- 📈 **Porcentaje de cobertura** de tu consumo
+- 🌱 **Reducción de CO₂** anual
+- 🏠 **Verificación de espacio** en el techo
+
+## 🇲🇽 **Diseñado para México**
+
+Esta herramienta está específicamente optimizada para:
+- Recibos de CFE (bimestrales principalmente)
+- Condiciones de radiación solar mexicana
+- Factores de eficiencia locales
+- Tarifas y patrones de consumo típicos
+
+## 📞 **Contribuir**
+
+¿Tienes sugerencias o mejoras? ¡Las contribuciones son bienvenidas!
+
+---
+
+**[🌞 Calcular mis paneles solares →](https://hao.systems/paneles-solares/)**
