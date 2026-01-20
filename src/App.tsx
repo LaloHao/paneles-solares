@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import SolarTips from './components/SolarTips'
 
@@ -7,66 +7,142 @@ interface CalculationResult {
   panelsNeededRounded: number
   systemPowerWatts: number
   monthlyGeneration: number
-  roofCapacity: number
-  efficiencyPercentage: number
+  monthlySavings: number
 }
 
 function App() {
-  const [totalConsumption, setTotalConsumption] = useState<number>(0) // kWh del recibo
-  const [billingPeriod, setBillingPeriod] = useState<number>(2) // meses del recibo
-  const [roofArea, setRoofArea] = useState<number>(0)
-  const [sunHours, setSunHours] = useState<number>(5.5) // Promedio México
-  const [panelPower, setPanelPower] = useState<number>(400)
+  // Función para cargar datos iniciales desde localStorage
+  const loadInitialState = () => {
+    try {
+      const savedData = localStorage.getItem('solarCalculatorData')
+      if (savedData) {
+        return JSON.parse(savedData)
+      }
+    } catch (error) {
+      console.error('Error cargando datos del localStorage:', error)
+    }
+    return {
+      billingPeriod: 2,
+      billingData: Array(6).fill(0),
+      peakSolarHours: 5,
+      lossFactory: 1.2,
+      panelPower: 400
+    }
+  }
+
+  const initialState = loadInitialState()
+
+  const [billingPeriod, setBillingPeriod] = useState<number>(initialState.billingPeriod)
+  const [billingData, setBillingData] = useState<number[]>(initialState.billingData)
+  const [peakSolarHours, setPeakSolarHours] = useState<number>(initialState.peakSolarHours)
+  const [lossFactory, setLossFactory] = useState<number>(initialState.lossFactory)
+  const [panelPower, setPanelPower] = useState<number>(initialState.panelPower)
   const [result, setResult] = useState<CalculationResult | null>(null)
+
+  // Guardar datos en localStorage cuando cambien
+  useEffect(() => {
+    const dataToSave = {
+      billingPeriod,
+      billingData,
+      peakSolarHours,
+      lossFactory,
+      panelPower
+    }
+    localStorage.setItem('solarCalculatorData', JSON.stringify(dataToSave))
+  }, [billingPeriod, billingData, peakSolarHours, lossFactory, panelPower])
+
+
+  // Calcular número de períodos según el período seleccionado
+  const getNumberOfPeriods = (period: number): number => {
+    return Math.ceil(12 / period)
+  }
+
+  // Obtener etiqueta del período
+  const getPeriodLabel = (period: number, index: number): string => {
+    switch (period) {
+      case 1:
+        return `Mes ${index + 1}`
+      case 2:
+        return `Bimestre ${index + 1}`
+      case 3:
+        return `Trimestre ${index + 1}`
+      case 6:
+        return `Semestre ${index + 1}`
+      default:
+        return `Período ${index + 1}`
+    }
+  }
+
+  // Actualizar datos de consumo
+  const handleBillingDataChange = (index: number, value: number) => {
+    const newData = [...billingData]
+    newData[index] = value
+    setBillingData(newData)
+  }
+
+  // Cambiar período y reset datos
+  const handlePeriodChange = (newPeriod: number) => {
+    setBillingPeriod(newPeriod)
+    const periods = getNumberOfPeriods(newPeriod)
+    setBillingData(Array(periods).fill(0))
+  }
+
+  // Calcular consumo anual total
+  const getTotalAnnualConsumption = (): number => {
+    return billingData.reduce((sum, val) => sum + val, 0)
+  }
+
+  // Calcular consumo diario
+  const getDailyConsumption = (): number => {
+    const total = getTotalAnnualConsumption()
+    return total > 0 ? total / 365 : 0
+  }
 
   const calculateSolarSystem = () => {
     // Validación de entrada
+    const totalConsumption = getTotalAnnualConsumption()
+    const dailyConsumption = getDailyConsumption()
+    
     if (totalConsumption <= 0) {
-      alert('Por favor ingresa un consumo válido del recibo');
+      alert('Por favor ingresa el consumo de tus recibos');
       return;
     }
 
-    // Calcular consumo mensual real
-    const monthlyConsumption = totalConsumption / billingPeriod
-    
     // Consumo diario en kWh
-    const dailyConsumption = monthlyConsumption / 30
+    const dailyConsumptionKwh = dailyConsumption
     
-    // Factor de eficiencia del sistema (considerando pérdidas de inversor, cables, etc.)
-    const systemEfficiency = 0.85
-    
-    // Energía diaria requerida del sistema solar (kWh) considerando eficiencia
-    const dailyEnergyNeeded = dailyConsumption / systemEfficiency
-    
-    // Energía diaria por panel (kWh) - considerando condiciones reales
-    const dailyEnergyPerPanel = (panelPower / 1000) * sunHours * 0.8 // Factor de rendimiento real
+    // Fórmula de potencia fotovoltaica: (P * l) / h
+    // P = consumo diario, l = factor de pérdida, h = horas solar pico
+    const requiredPowerKw = (dailyConsumptionKwh * lossFactory) / peakSolarHours
+    const requiredPowerW = requiredPowerKw * 1000
     
     // Número exacto de paneles necesarios (con decimales)
-    const panelsNeededExact = dailyEnergyNeeded / dailyEnergyPerPanel
+    const panelsNeededExact = requiredPowerW / panelPower
     
     // Número redondeado hacia arriba (mínimo 1 panel)
     const panelsNeededRounded = Math.max(1, Math.ceil(panelsNeededExact))
     
-    // Verificar si hay suficiente espacio en el techo
-    const maxPanelsInRoof = roofArea > 0 ? Math.floor(roofArea / 2.2) : panelsNeededRounded
-    const finalPanels = roofArea > 0 ? Math.min(panelsNeededRounded, maxPanelsInRoof) : panelsNeededRounded
-    
     // Potencia total del sistema en Watts
-    const finalSystemPowerWatts = finalPanels * panelPower
+    const finalSystemPowerWatts = panelsNeededRounded * panelPower
     
-    // Energía generada mensualmente (considerando eficiencia real)
-    const monthlyGeneration = (finalSystemPowerWatts / 1000) * sunHours * 30 * 0.8
+    // Energía generada diariamente
+    const dailyGeneration = (finalSystemPowerWatts / 1000) * peakSolarHours
     
-    // Porcentaje de eficiencia del sistema respecto al consumo
-    const efficiencyPercentage = (monthlyGeneration / monthlyConsumption) * 100
+    // Energía generada mensualmente
+    const monthlyGeneration = dailyGeneration * 30
+    
+    // Costo de electricidad en México (MXN por kWh) - promedio CFE
+    const costPerKwh = 2.5
+    
+    // Ahorro mensual estimado
+    const monthlySavings = monthlyGeneration * costPerKwh
 
     setResult({
       panelsNeededExact,
-      panelsNeededRounded: finalPanels,
+      panelsNeededRounded,
       systemPowerWatts: finalSystemPowerWatts,
       monthlyGeneration,
-      roofCapacity: maxPanelsInRoof,
-      efficiencyPercentage: Math.min(efficiencyPercentage, 100)
+      monthlySavings
     })
   }
 
@@ -78,57 +154,71 @@ function App() {
         <h2>Información de tu hogar</h2>
         
         <div className="input-group">
-          <label htmlFor="totalConsumption">Consumo total del recibo CFE (kWh):</label>
-          <input
-            type="number"
-            id="totalConsumption"
-            value={totalConsumption}
-            onChange={(e) => setTotalConsumption(Number(e.target.value))}
-            placeholder="Ej: 700 (recibo bimestral)"
-          />
-          <small>💡 Este es el número total de kWh que aparece en tu recibo de CFE</small>
-        </div>
-
-        <div className="input-group">
           <label htmlFor="billingPeriod">Período del recibo (meses):</label>
           <select
             id="billingPeriod"
             value={billingPeriod}
-            onChange={(e) => setBillingPeriod(Number(e.target.value))}
+            onChange={(e) => handlePeriodChange(Number(e.target.value))}
           >
-            <option value={1}>1 mes</option>
-            <option value={2}>2 meses (bimestral)</option>
-            <option value={3}>3 meses</option>
-            <option value={6}>6 meses</option>
+            <option value={1}>1 mes (12 recibos anuales)</option>
+            <option value={2}>2 meses - Bimestral (6 recibos anuales)</option>
+            <option value={3}>3 meses - Trimestral (4 recibos anuales)</option>
+            <option value={6}>6 meses - Semestral (2 recibos anuales)</option>
           </select>
-          <small>💡 La mayoría de recibos CFE en México son bimestrales (2 meses)</small>
+          <small>💡 Selecciona el período de tu recibo CFE</small>
         </div>
 
-        <div className="input-group">
-          <label htmlFor="roofArea">Área disponible en el techo (m²):</label>
-          <input
-            type="number"
-            id="roofArea"
-            value={roofArea}
-            onChange={(e) => setRoofArea(Number(e.target.value))}
-            placeholder="Ej: 50"
-          />
-        </div>
-
-        <div className="input-group">
-          <label htmlFor="sunHours">Horas de sol promedio por día:</label>
-          <input
-            type="number"
-            step="0.1"
-            id="sunHours"
-            value={sunHours}
-            onChange={(e) => setSunHours(Number(e.target.value))}
-            placeholder="Ej: 5.5"
-          />
+        <div className="billing-inputs-section">
+          <h3>Consumo de {getNumberOfPeriods(billingPeriod) * billingPeriod} meses ({getNumberOfPeriods(billingPeriod)} {getPeriodLabel(billingPeriod, 0).toLowerCase().split(' ')[0]}s)</h3>
+          <div className="billing-grid">
+            {billingData.map((value, index) => (
+              <div key={index} className="input-group billing-input">
+                <label htmlFor={`billing-${index}`}>{getPeriodLabel(billingPeriod, index)} (kWh):</label>
+                <input
+                  type="number"
+                  id={`billing-${index}`}
+                  value={value}
+                  onChange={(e) => handleBillingDataChange(index, Number(e.target.value))}
+                  placeholder={`Período ${index + 1}`}
+                />
+              </div>
+            ))}
+          </div>
+          <div className="consumption-summary">
+            <p><strong>Consumo anual total:</strong> <span className="highlight">{getTotalAnnualConsumption().toFixed(0)} kWh</span></p>
+            <p><strong>Consumo mensual promedio:</strong> <span className="highlight">{(getTotalAnnualConsumption() / 12).toFixed(0)} kWh/mes</span></p>
+            <p><strong>Consumo diario promedio:</strong> <span className="highlight">{getDailyConsumption().toFixed(2)} kWh/día</span></p>
+          </div>
         </div>
 
         <h3>Configuración de paneles</h3>
-        
+
+        <div className="input-group">
+          <label htmlFor="peakSolarHours">Horas solar pico por día:</label>
+          <input
+            type="number"
+            step="0.1"
+            id="peakSolarHours"
+            value={peakSolarHours}
+            onChange={(e) => setPeakSolarHours(Number(e.target.value))}
+            placeholder="Ej: 5"
+          />
+          <small>💡 Default para México: 5 horas</small>
+        </div>
+
+        <div className="input-group">
+          <label htmlFor="lossFactory">Factor de pérdida (inversor, cables, etc.):</label>
+          <input
+            type="number"
+            step="0.1"
+            id="lossFactory"
+            value={lossFactory}
+            onChange={(e) => setLossFactory(Number(e.target.value))}
+            placeholder="Ej: 1.2"
+          />
+          <small>💡 Default: 1.2 (20% de pérdidas)</small>
+        </div>
+
         <div className="input-group">
           <label htmlFor="panelPower">Potencia por panel (W):</label>
           <input
@@ -174,24 +264,6 @@ function App() {
             </div>
 
             <div className="result-card">
-              <h3>🏠 Capacidad del Techo</h3>
-              <p className="result-value">{result.roofCapacity}</p>
-              <p className="result-unit">paneles máximos</p>
-            </div>
-
-            <div className="result-card">
-              <h3>✅ Cobertura</h3>
-              <p className="result-value">{result.efficiencyPercentage.toFixed(1)}%</p>
-              <p className="result-unit">del consumo</p>
-            </div>
-
-            <div className="result-card">
-              <h3>🌱 Reducción CO₂</h3>
-              <p className="result-value">{(result.monthlyGeneration * 12 * 0.5).toFixed(0)}</p>
-              <p className="result-unit">kg/año</p>
-            </div>
-
-            <div className="result-card">
               <h3>🌱 Reducción CO₂</h3>
               <p className="result-value">{(result.monthlyGeneration * 12 * 0.5).toFixed(0)}</p>
               <p className="result-unit">kg/año</p>
@@ -201,25 +273,25 @@ function App() {
           <div className="summary">
             <h3>📝 Resumen</h3>
             
-            {(totalConsumption / billingPeriod) < 50 && (
+            {(getTotalAnnualConsumption() / 12) < 50 && getTotalAnnualConsumption() > 0 && (
               <div style={{backgroundColor: '#fff3cd', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #ffeaa7'}}>
-                <strong>⚠️ Consumo muy bajo:</strong> {(totalConsumption / billingPeriod).toFixed(0)} kWh/mes es un consumo extremadamente bajo. 
-                Un hogar promedio consume entre 200-500 kWh/mes. Verifica tu recibo CFE.
+                <strong>⚠️ Consumo muy bajo:</strong> {(getTotalAnnualConsumption() / 12).toFixed(0)} kWh/mes es un consumo extremadamente bajo. 
+                Un hogar promedio consume entre 200-500 kWh/mes. Verifica tus recibos.
               </div>
             )}
             
-            {(totalConsumption / billingPeriod) > 1000 && (
+            {(getTotalAnnualConsumption() / 12) > 1000 && (
               <div style={{backgroundColor: '#f8d7da', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #f5c6cb'}}>
-                <strong>⚠️ Consumo muy alto:</strong> {(totalConsumption / billingPeriod).toFixed(0)} kWh/mes es un consumo muy elevado. 
+                <strong>⚠️ Consumo muy alto:</strong> {(getTotalAnnualConsumption() / 12).toFixed(0)} kWh/mes es un consumo muy elevado. 
                 Considera mejorar la eficiencia energética antes de instalar paneles solares.
               </div>
             )}
             
             <div style={{backgroundColor: '#e8f5e8', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #c3e6c3'}}>
-              <strong>📊 Análisis del recibo:</strong>
-              <br />• Consumo total: {totalConsumption} kWh en {billingPeriod} mes{billingPeriod > 1 ? 'es' : ''}
-              <br />• Consumo mensual promedio: {(totalConsumption / billingPeriod).toFixed(0)} kWh/mes
-              <br />• Consumo diario promedio: {(totalConsumption / billingPeriod / 30).toFixed(1)} kWh/día
+              <strong>📊 Análisis del consumo anual:</strong>
+              <br />• Consumo total anual: {getTotalAnnualConsumption().toFixed(0)} kWh
+              <br />• Consumo mensual promedio: {(getTotalAnnualConsumption() / 12).toFixed(0)} kWh/mes
+              <br />• Consumo diario promedio: {getDailyConsumption().toFixed(2)} kWh/día
             </div>
             
             <ul>
@@ -227,25 +299,23 @@ function App() {
               <li>Recomendamos: {result.panelsNeededRounded} paneles solares completos</li>
               <li>Tu sistema generará {result.monthlyGeneration.toFixed(0)} kWh por mes</li>
               <li>Potencia total: {result.systemPowerWatts.toLocaleString()} Watts</li>
-              <li>Cobertura del {result.efficiencyPercentage.toFixed(1)}% de tu consumo mensual</li>
-              <li>Área requerida: {(result.panelsNeededRounded * 2.2).toFixed(1)} m²</li>
+              <li>Área requerida: {(result.panelsNeededRounded * 2.2).toFixed(2)} m²</li>
               <li>Evitarás {(result.monthlyGeneration * 12 * 0.5).toFixed(0)} kg de CO₂ al año</li>
-              {roofArea > 0 && result.panelsNeededRounded > result.roofCapacity && (
-                <li style={{color: '#e74c3c'}}>⚠️ Tu techo solo puede acomodar {result.roofCapacity} paneles</li>
-              )}
             </ul>
           </div>
         </div>
       )}
 
-      {result && (
+
+      {/* TODO: Implementar recomendaciones personalizadas */}
+      {/* result && (
         <SolarTips 
           systemPower={result.systemPowerWatts / 1000} 
-          monthlySavings={0} 
+          monthlySavings={result.monthlySavings} 
         />
-      )}
+      )}*/}
     </div>
   )
 }
 
-export default App
+export default App;

@@ -40,6 +40,57 @@ h3 {
   font-size: 1.3rem;
 }
 
+.billing-inputs-section {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin: 1.5rem 0;
+  border: 1px solid #e1e8ed;
+}
+
+.billing-inputs-section h3 {
+  margin-top: 0;
+  color: #2c3e50;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 0.5rem;
+}
+
+.billing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.billing-input label {
+  font-size: 0.9rem;
+}
+
+.billing-input input {
+  padding: 10px 12px;
+  font-size: 0.95rem;
+}
+
+.consumption-summary {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #2ecc71;
+  margin-top: 1rem;
+}
+
+.consumption-summary p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  color: #2c3e50;
+}
+
+.consumption-summary .highlight {
+  font-weight: bold;
+  color: #2ecc71;
+  font-size: 1.1rem;
+}
+
 .input-section {
   background: white;
   padding: 2rem;
